@@ -1,0 +1,5 @@
+gradio
+langchain
+ipykernel
+openai
+google-search-results
