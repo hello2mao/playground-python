@@ -288,6 +288,9 @@ def get_new_accounts_1():
 def job():
     logging.info(f"job start")
     df = pd.read_csv(ACCOUNT_CSV_FILE)
+    df.to_csv(
+        ACCOUNT_CSV_FILE + "." + datetime.now().strftime(TIME_FORMAT), index=False
+    )
     df_new_1 = get_new_accounts_1()
     df = pd.concat([df, df_new_1]).drop_duplicates(subset=["Email", "Password"])
     df = df.reset_index(drop=True)
@@ -322,9 +325,6 @@ def job():
     df = df.reset_index(drop=True)
     df.set_index(np.arange(1, len(df) + 1), inplace=True)
     df.to_csv(ACCOUNT_CSV_FILE, index=False)
-    df.to_csv(
-        ACCOUNT_CSV_FILE + "." + datetime.now().strftime(TIME_FORMAT), index=False
-    )
     content = df.to_markdown().encode()
     auth = Auth.Token(
         TOKEN
