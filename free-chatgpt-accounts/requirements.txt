@@ -1,0 +1,6 @@
+pandas
+tabulate
+OpenAIAuth
+retry
+PyGithub
+schedule

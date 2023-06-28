@@ -3,3 +3,8 @@ langchain
 ipykernel
 openai
 google-search-results
+pandas
+tabulate
+OpenAIAuth
+retry
+PyGithub
