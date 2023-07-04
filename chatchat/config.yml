@@ -1,0 +1,13 @@
+current_llm_model: "chatgpt"
+
+chatgpt:
+  email: "tcohen6@bodytracker.shop"
+  password: "@Ahrqg3E$j"
+
+chatglm:
+  sub_model_name: ""
+  
+
+chatyuan:
+
+moss:

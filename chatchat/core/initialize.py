@@ -1,6 +1,9 @@
 import os
 import logging
 
+from core import config
+from core.models import loader
+
 
 def initialize():
     if "GRADIO_ANALYTICS_ENABLED" not in os.environ:
@@ -18,3 +21,9 @@ def initialize():
     logging.getLogger("markdown_it").setLevel(logging.WARNING)
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
+
+    # config
+    conf = config.init()
+
+    # model
+    loader.load_model(conf["current_llm_model"])
