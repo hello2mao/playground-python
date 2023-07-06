@@ -1,13 +1,14 @@
 import gradio as gr
 import logging
 
-from core.models.info import llm_model_dict
+from core import model
 from core import shared
-from core.models import loader
+from core import config
+from core import ui_main_content
 
 
-MODE_CHAT = "对话"
-MODE_CONFIG = "配置"
+MODE_CHAT = "ChatBot"
+MODE_CONFIG = "Config"
 
 
 def mode_change(mode_choice):
@@ -15,17 +16,6 @@ def mode_change(mode_choice):
         return gr.update(visible=True), gr.update(visible=False)
     elif mode_choice == MODE_CONFIG:
         return gr.update(visible=False), gr.update(visible=True)
-
-
-def save_config(model_choice):
-    current_llm_model = shared.conf["current_llm_model"]
-    if model_choice != current_llm_model:
-        logging.info(
-            f"start to change model from {current_llm_model} to {model_choice}"
-        )
-        shared.conf["current_llm_model"] = model_choice
-        loader.unload_model()
-        loader.load_model(model_choice)
 
 
 default_theme_args = dict(
@@ -43,10 +33,10 @@ def create_ui():
         theme=gr.themes.Default(**default_theme_args),
     ) as app:
         with gr.Row(visible=True, elem_id="main"):
-            with gr.Column(scale=2, min_width=250, elem_id="main_sider"):
+            with gr.Column(elem_id="main_sider"):
                 with gr.Group(elem_id="new_chat_wrap"):
                     new_chat = gr.Button(
-                        value="+  新建对话", interactive=True, elem_id="new_chat"
+                        value="+  New Chat", interactive=True, elem_id="new_chat"
                     )
                 with gr.Group(elem_id="chat_history"):
                     gr.Markdown()
@@ -58,61 +48,61 @@ def create_ui():
                     interactive=True,
                     container=False,
                 )
-            with gr.Column(
-                scale=13, elem_id="main_content", visible=True
-            ) as main_content:
-                with gr.Group(elem_id="main_content_header"):
-                    gr.Markdown(
-                        """
-                    **Model:** ChatGPT
-                    """,
-                        elem_id="model_info",
-                    )
-                chatbot = gr.Chatbot(
-                    show_label=False,
-                    elem_id="chatbot",
-                )
-                input = gr.Textbox(
-                    show_label=False,
-                    container=False,
-                    elem_id="input_box",
-                    placeholder="Send a message...",
-                )
-            with gr.Column(
-                scale=13, elem_id="main_config", visible=False
-            ) as main_config:
+            with gr.Column(elem_id="main_content", visible=True) as main_content:
+                ui_main_content.create_ui()
+            with gr.Column(elem_id="main_config", visible=False) as main_config:
                 with gr.Column():
-                    with gr.Tab("模型", elem_id="model_config"):
+                    with gr.Tab("Model", elem_id="model_config"):
                         model_choice = gr.Dropdown(
-                            list(llm_model_dict.keys()),
-                            label="模型选择",
+                            list(shared.llm_models.keys()),
+                            label="Model Choice",
                             elem_id="model_choice",
-                            value=shared.conf["current_llm_model"],
+                            value=shared.cur_llm_model_name,
                             interactive=True,
                         )
-                    with gr.Tab("通用", elem_id="app_config"):
-                        gr.Markdown()
-                    save_config_btn = gr.Button(
-                        "保存配置", elem_id="save_config", variant="primary"
-                    )
-                save_config_btn.click(fn=save_config, inputs=[model_choice], outputs=[])
+                        model_configs = []
+                        for llm_model in shared.llm_models.keys():
+                            with gr.Box(
+                                elem_id="model_config_" + llm_model,
+                                visible=llm_model == shared.cur_llm_model_name,
+                            ) as model_config:
+                                components = shared.llm_models[
+                                    llm_model
+                                ].create_config_ui()
+                                model_config_save_btn = gr.Button(
+                                    "Save and Reload",
+                                    elem_id="model_config_save",
+                                    variant="primary",
+                                )
+                                model_config_save_btn.click(
+                                    fn=config.save_model_config,
+                                    inputs=[model_choice] + components,
+                                    outputs=[],
+                                )
+                            model_configs.append(model_config)
 
+                        model_choice.change(
+                            fn=model.model_change,
+                            inputs=[model_choice],
+                            outputs=model_configs,
+                        )
+
+                    with gr.Tab("System", elem_id="system_config"):
+                        gr.Markdown()
+                        system_config_save_btn = gr.Button(
+                            "Save and Reload",
+                            elem_id="system_config_save",
+                            variant="primary",
+                        )
+                        system_config_save_btn.click(
+                            fn=config.save_system_config,
+                            inputs=[],
+                            outputs=[],
+                        )
             mode_choice.change(
                 fn=mode_change,
                 inputs=[mode_choice],
                 outputs=[main_content, main_config],
             )
-
-        response = input.submit(
-            lambda user_message, history: (
-                gr.update(value="", interactive=False),
-                history + [[user_message, None]],
-            ),
-            [input, chatbot],
-            [input, chatbot],
-            queue=False,
-        )
-        response.then(getattr(shared.model, "stream_chat"), chatbot, chatbot)
-        response.then(lambda: gr.update(interactive=True), None, [input], queue=False)
 
     return app

@@ -1,2 +1,5 @@
 gradio
+langchain
+accelerate
+transformers
 revChatGPT

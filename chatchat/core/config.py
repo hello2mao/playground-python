@@ -33,3 +33,14 @@ def init():
 def save(conf):
     with open(CONFIG_FILE) as f:
         yaml.dump(conf, f)
+
+
+def save_model_config(model_choice, components):
+    current_llm_model = shared.conf["current_llm_model"]
+    if model_choice == current_llm_model:
+        return
+    logging.info(f"start change model, from {current_llm_model} to {model_choice}")
+
+
+def save_system_config():
+    pass

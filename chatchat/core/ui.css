@@ -45,11 +45,14 @@ footer {
     padding-bottom: 25px;
     flex-grow: 1;
     padding: 0;
+    gap: 0px;
+    display: flex;
 }
 
 /* main_sider */
 
 #main_sider {
+    flex-grow: 0 !important;
     display: flex;
     flex-direction: column;
     justify-content: start;
@@ -96,10 +99,10 @@ footer {
 /* main_content */
 
 #main_content {
+    flex-grow: 1 !important;
     display: flex;
     align-items: center;
     padding-bottom: 25px;
-    padding-right: 25px;
 }
 
 #main_content #main_content_header {
@@ -108,6 +111,7 @@ footer {
     flex-direction: row;
     justify-content: center;
     align-items: center;
+    border-bottom: 2px solid #f3f4f6;
 }
 
 #main_content #main_content_header #model_info {
@@ -137,10 +141,6 @@ footer {
     width: 800px;
 }
 
-#main_content .gap {
-    gap: 8px;
-}
-
 #chatbot {
     margin-bottom: 20px;
     border: 1px solid rgba(0, 0, 0, 0) !important;
@@ -165,7 +165,8 @@ footer {
 
 /* main_config */
 #main_config {
-    padding: 20px;
+    flex-grow: 1 !important;
+    padding: 40px !important;
 }
 
 #main_config .tabs {
@@ -180,11 +181,11 @@ footer {
     width: 400px;
 }
 
-#main_config .tabs #app_config {
+#main_config .tabs #system_config {
     height: 98%;
 }
 
-#save_config {
+#system_config {
     margin-top: 20px;
     margin-bottom: 20px;
 }

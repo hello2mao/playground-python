@@ -2,7 +2,7 @@ import os
 import logging
 
 from core import config
-from core.models import loader
+from core import model
 
 
 def initialize():
@@ -26,4 +26,5 @@ def initialize():
     conf = config.init()
 
     # model
-    loader.load_model(conf["current_llm_model"])
+    model.init_models()
+    model.reload_model(conf["default_llm_model"])
