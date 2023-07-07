@@ -55,32 +55,34 @@ def create_ui():
                     with gr.Tab("Model", elem_id="model_config"):
                         model_choice = gr.Dropdown(
                             list(shared.llm_models.keys()),
+                            show_label=False,
+                            container=False,
                             label="Model Choice",
                             elem_id="model_choice",
                             value=shared.cur_llm_model_name,
                             interactive=True,
                         )
                         model_configs = []
+                        components = []
                         for llm_model in shared.llm_models.keys():
                             with gr.Box(
                                 elem_id="model_config_" + llm_model,
                                 visible=llm_model == shared.cur_llm_model_name,
                             ) as model_config:
-                                components = shared.llm_models[
-                                    llm_model
-                                ].create_config_ui()
-                                model_config_save_btn = gr.Button(
-                                    "Save and Reload",
-                                    elem_id="model_config_save",
-                                    variant="primary",
-                                )
-                                model_config_save_btn.click(
-                                    fn=config.save_model_config,
-                                    inputs=[model_choice] + components,
-                                    outputs=[],
+                                components.extend(
+                                    shared.llm_models[llm_model].create_config_ui()
                                 )
                             model_configs.append(model_config)
-
+                        model_config_save_btn = gr.Button(
+                            "Save and Reload",
+                            elem_id="model_config_save",
+                            variant="primary",
+                        )
+                        model_config_save_btn.click(
+                            fn=config.save_model_config,
+                            inputs=components,
+                            outputs=[],
+                        )
                         model_choice.change(
                             fn=model.model_change,
                             inputs=[model_choice],

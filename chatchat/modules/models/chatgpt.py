@@ -7,6 +7,12 @@ from revChatGPT.V1 import Chatbot
 
 logger = logging.getLogger("ChatGPT")
 
+CHATPROXY_PROXYS = [
+    "https://bypass.churchless.tech/",
+    "https://ai.fakeopen.com/api/conversation",
+    "https://api.pawan.krd/backend-api/conversation",
+]
+
 
 class ChatGPT(BaseModel):
     chatgptBot: object = None
@@ -33,6 +39,7 @@ class ChatGPT(BaseModel):
                 "email": self.email,
                 "password": self.password,
             },
+            base_url=None,
         )
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
@@ -57,6 +64,25 @@ class ChatGPT(BaseModel):
             yield history
 
     def create_config_ui(self):
-        email = gr.Textbox(value=self.email)
-        password = gr.Textbox(value=self.password)
-        return [email, password]
+        with gr.Box(elem_id="chagpt_free_mode"):
+            gr.Markdown(
+                """
+## ChatGPT Free Mode
+Using a free reverse proxy to pass Cloudflare browser check that allows users to access OpenAI API for free.
+
+
+"""
+            )
+            email = gr.Textbox(
+                label="Email", info="OpenAI Email Address", value=self.email
+            )
+            password = gr.Textbox(
+                label="Password", info="OpenAI Password", value=self.password
+            )
+            proxy = gr.Dropdown(
+                choices=CHATPROXY_PROXYS,
+                value=CHATPROXY_PROXYS[0],
+                label="ChatGPT Porxy",
+                info="ChatGPT Free Reverse Proxy URL",
+            )
+        return [email, password, proxy]

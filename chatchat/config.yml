@@ -1,4 +1,4 @@
-default_llm_model: "ChatGLM"
+default_llm_model: "ChatGPT"
 
 llm_models:
   ChatGPT:

@@ -5,12 +5,12 @@ from typing import List
 from modules.models import ChatGLM
 from modules.models import ChatGPT
 from modules.models import BaseModel
-
+from modules.utils.log import record_log
 from core import shared
 
 
+@record_log
 def init_models():
-    logging.info(f"start init_models")
     for model_name in shared.conf["llm_models"].keys():
         class_object: BaseModel = globals().get(model_name) or locals().get(model_name)
         if class_object is None:
@@ -19,16 +19,15 @@ def init_models():
         shared.llm_models[model_name] = class_object(
             shared.conf["llm_models"][model_name]
         )
-    logging.info(f"init_models done")
 
 
+@record_log
 def reload_model(model_name: str):
-    logging.info(f"start reload_model: {model_name}")
     shared.llm_models[model_name].reload_model()
     shared.cur_llm_model_name = model_name
-    logging.info(f"reload_model done: {model_name}")
 
 
+@record_log
 def unload_model():
     if shared.cur_llm_model_name is None:
         return

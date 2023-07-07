@@ -3,6 +3,9 @@ import logging
 
 from core import config
 from core import model
+from core import shared
+
+CONFIG_FILE = "config.yml"
 
 
 def initialize():
@@ -23,8 +26,8 @@ def initialize():
     logging.getLogger("httpx").setLevel(logging.WARNING)
 
     # config
-    conf = config.init()
+    shared.opts.load(CONFIG_FILE)
 
     # model
     model.init_models()
-    model.reload_model(conf["default_llm_model"])
+    model.reload_model(shared.opts.default_llm_model)

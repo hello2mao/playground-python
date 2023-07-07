@@ -1,7 +1,7 @@
 /* global */
 
-.gap {
-    gap: 0px !important;
+:root {
+    --main-content-width: 900px;
 }
 
 .hide {
@@ -106,7 +106,7 @@ footer {
 }
 
 #main_content #main_content_header {
-    height: 40px;
+    height: 30px;
     display: flex;
     flex-direction: row;
     justify-content: center;
@@ -138,18 +138,18 @@ footer {
 }
 
 #main_content .form {
-    width: 800px;
+    width: var(--main-content-width);
 }
 
 #chatbot {
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     border: 1px solid rgba(0, 0, 0, 0) !important;
     box-shadow: none;
-    width: 800px;
+    width: var(--main-content-width);
 }
 
 #chatbot .user {
-    text-align: right;
+    text-align: left;
 }
 
 #input_box textarea {
@@ -160,7 +160,7 @@ footer {
 }
 
 #model_info {
-    width: 800px;
+    width: var(--main-content-width);
 }
 
 /* main_config */
@@ -179,6 +179,10 @@ footer {
 
 #model_config #model_choice {
     width: 400px;
+}
+
+#model_config #model_config_save {
+    margin-top: 20px;
 }
 
 #main_config .tabs #system_config {
