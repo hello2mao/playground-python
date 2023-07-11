@@ -11,20 +11,19 @@ from core import shared
 
 @record_log
 def init_models():
-    for model_name in shared.conf["llm_models"].keys():
+    for model_name in shared.opts.get("system_config", "llm_models"):
         class_object: BaseModel = globals().get(model_name) or locals().get(model_name)
         if class_object is None:
             logging.error(f"init_models failed: class_object is None")
             continue
-        shared.llm_models[model_name] = class_object(
-            shared.conf["llm_models"][model_name]
-        )
+        shared.llm_models[model_name] = class_object()
 
 
 @record_log
 def reload_model(model_name: str):
     shared.llm_models[model_name].reload_model()
     shared.cur_llm_model_name = model_name
+    shared.opts.set("system_config", "default_llm_model", model_name)
 
 
 @record_log
@@ -51,3 +50,7 @@ def model_change(model_choice):
     for key in list(shared.llm_models.keys()):
         results.append(gr.update(visible=key == model_choice))
     return results
+
+
+def model_config_save():
+    return gr.update(value="Model: " + shared.cur_llm_model_name)

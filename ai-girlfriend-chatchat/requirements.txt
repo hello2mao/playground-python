@@ -1,0 +1,6 @@
+gradio==3.35.2
+langchain
+accelerate
+transformers
+sentencepiece
+revChatGPT

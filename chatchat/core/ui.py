@@ -3,12 +3,25 @@ import logging
 
 from core import model
 from core import shared
-from core import config
-from core import ui_main_content
 
 
 MODE_CHAT = "ChatBot"
 MODE_CONFIG = "Config"
+
+get_local_storage = """
+    function() {
+      globalThis.setStorage = (key, value)=>{
+        localStorage.setItem(key, JSON.stringify(value))
+      }
+       globalThis.getStorage = (key, value)=>{
+        return JSON.parse(localStorage.getItem(key))
+      }
+       const text_input =  getStorage('text_input')
+       const dropdown =  getStorage('dropdown')
+       const local_data =  getStorage('local_data')
+       return [text_input, dropdown, local_data];
+      }
+    """
 
 
 def mode_change(mode_choice):
@@ -36,7 +49,10 @@ def create_ui():
             with gr.Column(elem_id="main_sider"):
                 with gr.Group(elem_id="new_chat_wrap"):
                     new_chat = gr.Button(
-                        value="+  New Chat", interactive=True, elem_id="new_chat"
+                        value="+  New Chat",
+                        interactive=True,
+                        elem_id="new_chat",
+                        visible=False,
                     )
                 with gr.Group(elem_id="chat_history"):
                     gr.Markdown()
@@ -49,7 +65,34 @@ def create_ui():
                     container=False,
                 )
             with gr.Column(elem_id="main_content", visible=True) as main_content:
-                ui_main_content.create_ui()
+                with gr.Group(elem_id="main_content_header"):
+                    model_info = gr.Markdown(
+                        value=lambda: "Model: " + shared.cur_llm_model_name,
+                        elem_id="model_info",
+                    )
+                chatbot = gr.Chatbot(
+                    show_label=False,
+                    elem_id="chatbot",
+                )
+                input = gr.Textbox(
+                    show_label=False,
+                    container=False,
+                    elem_id="input_box",
+                    placeholder="Send a message...",
+                )
+                response = input.submit(
+                    lambda input, chatbot: (
+                        gr.update(value="", interactive=False),
+                        chatbot + [[input, None]],
+                    ),
+                    [input, chatbot],
+                    [input, chatbot],
+                    queue=False,
+                )
+                response.then(model.stream_chat, [chatbot], [chatbot])
+                response.then(
+                    lambda: gr.update(interactive=True), None, [input], queue=False
+                )
             with gr.Column(elem_id="main_config", visible=False) as main_config:
                 with gr.Column():
                     with gr.Tab("Model", elem_id="model_config"):
@@ -59,30 +102,24 @@ def create_ui():
                             container=False,
                             label="Model Choice",
                             elem_id="model_choice",
-                            value=shared.cur_llm_model_name,
+                            value=lambda: shared.cur_llm_model_name,
                             interactive=True,
                         )
                         model_configs = []
-                        components = []
                         for llm_model in shared.llm_models.keys():
                             with gr.Box(
                                 elem_id="model_config_" + llm_model,
                                 visible=llm_model == shared.cur_llm_model_name,
                             ) as model_config:
-                                components.extend(
-                                    shared.llm_models[llm_model].create_config_ui()
+                                model_config_response = shared.llm_models[
+                                    llm_model
+                                ].create_config_ui()
+                                model_config_response.then(
+                                    fn=model.model_config_save,
+                                    inputs=[],
+                                    outputs=model_info,
                                 )
                             model_configs.append(model_config)
-                        model_config_save_btn = gr.Button(
-                            "Save and Reload",
-                            elem_id="model_config_save",
-                            variant="primary",
-                        )
-                        model_config_save_btn.click(
-                            fn=config.save_model_config,
-                            inputs=components,
-                            outputs=[],
-                        )
                         model_choice.change(
                             fn=model.model_change,
                             inputs=[model_choice],
@@ -95,11 +132,6 @@ def create_ui():
                             "Save and Reload",
                             elem_id="system_config_save",
                             variant="primary",
-                        )
-                        system_config_save_btn.click(
-                            fn=config.save_system_config,
-                            inputs=[],
-                            outputs=[],
                         )
             mode_choice.change(
                 fn=mode_change,

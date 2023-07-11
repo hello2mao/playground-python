@@ -1,0 +1,17 @@
+{
+    "system_config": {
+        "default_llm_model": "ChatGLM",
+        "llm_models": [
+            "ChatGPT",
+            "ChatGLM"
+        ]
+    },
+    "ChatGPT": {
+        "email": "tcohen6@bodytracker.shop",
+        "password": "@Ahrqg3E$j",
+        "proxy": "https://api.pawan.krd/backend-api/conversation"
+    },
+    "ChatGLM": {
+        "pretrained_model_name_or_path": "THUDM/chatglm2-6b"
+    }
+}

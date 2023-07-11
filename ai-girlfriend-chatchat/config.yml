@@ -1,0 +1,9 @@
+default_llm_model: "ChatGPT"
+
+llm_models:
+  ChatGPT:
+    email: "tcohen6@bodytracker.shop"
+    password: "@Ahrqg3E$j"
+
+  ChatGLM:
+    model_name: "THUDM/chatglm2-6b"

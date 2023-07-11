@@ -8,6 +8,8 @@ import logging
 
 from .base import BaseModel
 from modules.utils import gpu
+from core import shared
+from core import model
 
 from transformers import AutoTokenizer, AutoModel, AutoConfig
 
@@ -21,6 +23,8 @@ CHATGLM_MODELS = [
     "THUDM/chatglm-6b-int4-qe",
 ]
 
+MODEL_NAME = "ChatGLM"
+
 
 class ChatGLM(BaseModel):
     # model
@@ -29,7 +33,7 @@ class ChatGLM(BaseModel):
     model_config: object = None
 
     # config
-    model_name: str = CHATGLM_MODELS[0]
+    pretrained_model_name_or_path: str = CHATGLM_MODELS[0]
     max_token: int = 10000
     temperature: float = 0.01
     top_p = 0.9
@@ -39,21 +43,25 @@ class ChatGLM(BaseModel):
     device: str = "cuda"  # TODO
     device_map: Optional[Dict[str, int]] = None  # TODO
 
-    def __init__(self, config: dict = None):
+    def __init__(self):
         super().__init__()
-        self.model_name = config.get("model_name", CHATGLM_MODELS[0])
+
+    @property
+    def _llm_type(self) -> str:
+        return MODEL_NAME
+
+    def _load_model(self):
+        config = shared.opts.get(MODEL_NAME, None)
+        logger.info(f"model config: {config}")
+        self.pretrained_model_name_or_path = config.get(
+            "pretrained_model_name_or_path", CHATGLM_MODELS[0]
+        )
         self.max_token = config.get("max_token", 10000)
         self.temperature = config.get("temperature", 0.01)
         self.top_p = config.get("top_p", 0.9)
         self.history_len = config.get("history_len", 10)
         self.bf16 = config.get("bf16", False)
-
-    @property
-    def _llm_type(self) -> str:
-        return "ChatGLM"
-
-    def _load_model(self):
-        logger.info(f"Loading {self.model_name}...")
+        logger.info(f"Loading {self.pretrained_model_name_or_path}...")
 
         t0 = time.time()
 
@@ -62,7 +70,7 @@ class ChatGLM(BaseModel):
         if num_gpus < 2 and self.device_map is None:
             model = (
                 AutoModel.from_pretrained(
-                    self.model_name,
+                    self.pretrained_model_name_or_path,
                     config=self.model_config,
                     torch_dtype=torch.bfloat16 if self.bf16 else torch.float16,
                     trust_remote_code=True,
@@ -74,7 +82,7 @@ class ChatGLM(BaseModel):
             from accelerate import dispatch_model
 
             model = AutoModel.from_pretrained(
-                self.model_name,
+                self.pretrained_model_name_or_path,
                 config=self.model_config,
                 torch_dtype=torch.bfloat16 if self.bf16 else torch.float16,
                 trust_remote_code=True,
@@ -86,7 +94,7 @@ class ChatGLM(BaseModel):
 
         # load tokenizer
         tokenizer = AutoTokenizer.from_pretrained(
-            self.model_name, trust_remote_code=True
+            self.pretrained_model_name_or_path, trust_remote_code=True
         )
 
         logger.info(f"Loaded the model in {(time.time() - t0):.2f} seconds.")
@@ -133,7 +141,7 @@ class ChatGLM(BaseModel):
 
     def _load_model_config(self):
         model_config = AutoConfig.from_pretrained(
-            self.model_name, trust_remote_code=True
+            self.pretrained_model_name_or_path, trust_remote_code=True
         )
 
         return model_config
@@ -189,5 +197,32 @@ class ChatGLM(BaseModel):
             return history
 
     def create_config_ui(self):
-        model_name = gr.Radio(choices=CHATGLM_MODELS, value=self.model_name)
-        return [model_name]
+        pretrained_model_name_or_path = gr.Radio(
+            label="Sub Model Choice",
+            choices=CHATGLM_MODELS,
+            value=lambda: shared.opts.get(MODEL_NAME, "pretrained_model_name_or_path"),
+        )
+        model_config_save_btn = gr.Button(
+            "Save and Reload",
+            elem_id="model_config_save",
+            variant="primary",
+        )
+
+        def save_model_config(
+            pretrained_model_name_or_path, progress=gr.Progress(track_tqdm=True)
+        ):
+            shared.opts.set(
+                MODEL_NAME,
+                "pretrained_model_name_or_path",
+                pretrained_model_name_or_path,
+            )
+            model.reload_model(MODEL_NAME)
+            return gr.update()
+
+        response = model_config_save_btn.click(
+            fn=save_model_config,
+            inputs=[pretrained_model_name_or_path],
+            outputs=[pretrained_model_name_or_path],
+        )
+
+        return response

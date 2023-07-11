@@ -15,56 +15,35 @@ def get_model() -> BaseModel:
     return llm_models[cur_llm_model_name]
 
 
-class OptionInfo:
-    def __init__(
-        self,
-        default=None,
-        component=None,
-        component_args=None,
-        onchange=None,
-    ):
-        self.default = default
-        self.component = component
-        self.component_args = component_args
-        self.onchange = onchange
-
-
-system_info_default = {}
-system_info_default.update(
-    "logLevel",
-    OptionInfo(
-        "debug",
-        gr.Textbox,
-        {
-            "label": "Log Level",
-        },
-    ),
-)
-
-
 class Options:
     data = {}  # record key value
-    model_info = {}  # record model option info
-    system_info = system_info_default  # record system option info
     config_file = None
 
     def __init__(self):
-        self.data = {k: v.default for k, v in self.system_info.items()}
+        pass
 
-    def __setattr__(self, key: str, value: Any):
-        self.data[key] = value
-        return
+    def get(self, scope: str, key: str) -> Any:
+        if scope is None:
+            return None
+        if key is None and scope in self.data:
+            return self.data[scope]
+        if scope in self.data and key in self.data[scope]:
+            return self.data[scope][key]
+        return None
 
-    def __getattribute__(self, key: str) -> Any:
-        if key in self.data:
-            return self.data[key]
-        if key in self.model_info:
-            return self.model_info[key].default
-        if key in self.system_info:
-            return self.system_info[key].default
-
-    def add_model_option(self, key: str, info: OptionInfo):
-        self.model_info[key] = info
+    def set(self, scope: str, key: str, value: Any):
+        if scope is None or key is None:
+            return
+        need_save = False
+        old_value = self.get(scope, key)
+        if old_value != value:
+            need_save = True
+        self.data[scope][key] = value
+        if need_save:
+            logging.info(
+                f"config change, start save to file, key: {key}, old_value: {old_value}, new_value: {value}"
+            )
+            self.save()
 
     def save(self):
         with open(self.config_file, "w", encoding="utf8") as file:

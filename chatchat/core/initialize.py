@@ -1,11 +1,10 @@
 import os
 import logging
 
-from core import config
 from core import model
 from core import shared
 
-CONFIG_FILE = "config.yml"
+CONFIG_FILE = "config.json"
 
 
 def initialize():
@@ -30,4 +29,4 @@ def initialize():
 
     # model
     model.init_models()
-    model.reload_model(shared.opts.default_llm_model)
+    model.reload_model(shared.opts.get("system_config", "default_llm_model"))
