@@ -3,15 +3,32 @@
         "default_llm_model": "ChatGLM",
         "llm_models": [
             "ChatGPT",
-            "ChatGLM"
+            "ChatGLM",
+            "Baichuan"
+        ],
+        "plugins": [
+            "Summarization",
+            "SQL"
         ]
     },
     "ChatGPT": {
         "email": "tcohen6@bodytracker.shop",
         "password": "@Ahrqg3E$j",
-        "proxy": "https://api.pawan.krd/backend-api/conversation"
+        "proxy": "https://api.pawan.krd/backend-api/conversation",
+        "display_name": "ChatGPT"
     },
     "ChatGLM": {
-        "pretrained_model_name_or_path": "THUDM/chatglm2-6b"
+        "pretrained_model_name_or_path": "THUDM/chatglm2-6b",
+        "display_name": "ChatGLM"
+    },
+    "Baichuan": {
+        "pretrained_model_name_or_path": "baichuan-inc/Baichuan-13B-Chat",
+        "display_name": "\u767e\u5ddd"
+    },
+    "Summarization": {
+        "display_name": "\u6587\u6863\u6458\u8981"
+    },
+    "SQL": {
+        "display_name": "\u5bf9\u8bddSQL\u6570\u636e\u5e93"
     }
 }

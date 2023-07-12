@@ -1,12 +1,15 @@
+# coding=utf-8
+
 import torch
 import gradio as gr
 from pathlib import Path
 from typing import Optional, List, Dict
 import time
 import logging
+from retry import retry
 
 
-from .base import BaseModel
+from .base import BaseLLM
 from modules.utils import gpu
 from core import shared
 from core import model
@@ -26,7 +29,7 @@ CHATGLM_MODELS = [
 MODEL_NAME = "ChatGLM"
 
 
-class ChatGLM(BaseModel):
+class ChatGLM(BaseLLM):
     # model
     tokenizer: object = None
     model: object = None
@@ -45,10 +48,18 @@ class ChatGLM(BaseModel):
 
     def __init__(self):
         super().__init__()
+        logger.info(f"Model {MODEL_NAME} init")
 
     @property
-    def _llm_type(self) -> str:
+    def _model_name(self) -> str:
         return MODEL_NAME
+
+    def _load_model_config(self):
+        model_config = AutoConfig.from_pretrained(
+            self.pretrained_model_name_or_path, trust_remote_code=True
+        )
+
+        return model_config
 
     def _load_model(self):
         config = shared.opts.get(MODEL_NAME, None)
@@ -61,6 +72,7 @@ class ChatGLM(BaseModel):
         self.top_p = config.get("top_p", 0.9)
         self.history_len = config.get("history_len", 10)
         self.bf16 = config.get("bf16", False)
+
         logger.info(f"Loading {self.pretrained_model_name_or_path}...")
 
         t0 = time.time()
@@ -139,40 +151,22 @@ class ChatGLM(BaseModel):
 
         return device_map
 
-    def _load_model_config(self):
-        model_config = AutoConfig.from_pretrained(
-            self.pretrained_model_name_or_path, trust_remote_code=True
-        )
-
-        return model_config
-
     def unload_model(self):
         del self.model
         del self.tokenizer
         self.model = self.tokenizer = None
         gpu.clear_torch_cache(self.device)
 
+    @retry(tries=3, delay=1)
     def reload_model(self):
         self.unload_model()
         self.model_config = self._load_model_config()
         self.model, self.tokenizer = self._load_model()
         self.model = self.model.eval()
 
-    def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
-        logger.debug(f"__call: {prompt}")
-        response, _ = self.model.chat(
-            self.tokenizer,
-            prompt,
-            history=[],
-            max_length=self.max_token,
-            temperature=self.temperature,
-        )
-        logger.debug(f"response: {response}")
-        return response
-
     def generateAnswer(
         self, prompt: str, history: List[List[str]] = [], streaming: bool = False
-    ):
+    ) -> List[List[str]]:
         if streaming:
             history += [[]]
             for stream_resp, _ in self.model.stream_chat(
@@ -194,16 +188,16 @@ class ChatGLM(BaseModel):
             )
             gpu.clear_torch_cache()
             history += [[prompt, response]]
-            return history
+            yield history
 
     def create_config_ui(self):
         pretrained_model_name_or_path = gr.Radio(
-            label="Sub Model Choice",
+            label="子模型选择",
             choices=CHATGLM_MODELS,
             value=lambda: shared.opts.get(MODEL_NAME, "pretrained_model_name_or_path"),
         )
         model_config_save_btn = gr.Button(
-            "Save and Reload",
+            "保存并加载",
             elem_id="model_config_save",
             variant="primary",
         )

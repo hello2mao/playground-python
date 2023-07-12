@@ -1,5 +1,6 @@
-from .base import BaseModel
+from .base import BaseLLM
 from .chatglm import ChatGLM
 from .chatgpt import ChatGPT
+from .baichuan import Baichuan
 
-__all__ = [BaseModel, ChatGLM, ChatGPT]
+__all__ = [BaseLLM, ChatGLM, ChatGPT, Baichuan]

@@ -1,7 +1,4 @@
-from revChatGPT.V1 import Chatbot
-import gradio as gr
-import os
-import logging
+# coding=utf-8
 
 from core import initialize
 from core import ui
@@ -9,6 +6,7 @@ from core import shared
 
 
 if __name__ == "__main__":
+    print("chatchat start")
     initialize.initialize()
 
     shared.app = ui.create_ui()

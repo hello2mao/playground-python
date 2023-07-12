@@ -1,29 +1,39 @@
+# coding=utf-8
+
 import logging, os
 import gradio as gr
 from typing import List
+from retry import retry
 
 from modules.models import ChatGLM
 from modules.models import ChatGPT
-from modules.models import BaseModel
+from modules.models import Baichuan
+from modules.models import BaseLLM
 from modules.utils.log import record_log
 from core import shared
+from core.const import *
 
 
 @record_log
 def init_models():
-    for model_name in shared.opts.get("system_config", "llm_models"):
-        class_object: BaseModel = globals().get(model_name) or locals().get(model_name)
+    for model_name in shared.opts.get(SYSTEM_CONFIG, LLM_MODELS):
+        class_object: BaseLLM = globals().get(model_name) or locals().get(model_name)
         if class_object is None:
             logging.error(f"init_models failed: class_object is None")
-            continue
+            os._exit(-1)
         shared.llm_models[model_name] = class_object()
 
 
 @record_log
 def reload_model(model_name: str):
-    shared.llm_models[model_name].reload_model()
+    try:
+        shared.llm_models[model_name].reload_model()
+    except Exception as err:
+        errMsg = f"reload_model to {model_name} failed: {err}"
+        logging.error(errMsg)
+        raise gr.Error(errMsg)
     shared.cur_llm_model_name = model_name
-    shared.opts.set("system_config", "default_llm_model", model_name)
+    shared.opts.set(SYSTEM_CONFIG, DEFAULT_LLM_MODEL, model_name)
 
 
 @record_log
@@ -38,19 +48,43 @@ def unload_model():
 def stream_chat(chatbot: List[List[str]]):
     if shared.cur_llm_model_name is None:
         return
-    input = chatbot[-1][0]
-    for history in shared.get_model().generateAnswer(
-        input, chatbot[:-1], streaming=True
-    ):
-        yield history
+    if shared.cur_plugin_name == "None":
+        try:
+            input = chatbot[-1][0]
+            for history in shared.get_model().generateAnswer(
+                input, chatbot[:-1], streaming=True
+            ):
+                yield history
+        except Exception as err:
+            errMsg = f"错误：{err}"
+            logging.error(errMsg)
+            raise gr.Error(errMsg)
+    else:
+        try:
+            input = chatbot[-1][0]
+            for history in shared.get_plugin().generatePluginAnswer(
+                shared.get_model(), input, chatbot[:-1], streaming=False
+            ):
+                yield history
+        except Exception as err:
+            errMsg = f"错误：{err}"
+            logging.error(errMsg)
+            raise gr.Error(errMsg)
 
 
 def model_change(model_choice):
+    model_choice = shared.opts.from_display_name(model_choice)
     results = []
-    for key in list(shared.llm_models.keys()):
-        results.append(gr.update(visible=key == model_choice))
+    for model_name in shared.opts.get(SYSTEM_CONFIG, LLM_MODELS):
+        results.append(gr.update(visible=model_name == model_choice))
     return results
 
 
 def model_config_save():
-    return gr.update(value="Model: " + shared.cur_llm_model_name)
+    return gr.update(
+        value="Model: " + shared.opts.to_display_name(shared.cur_llm_model_name)
+    )
+
+
+def system_config_save():
+    pass

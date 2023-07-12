@@ -1,0 +1,8 @@
+MODE_CHAT = "聊天"
+MODE_CONFIG = "配置"
+CONFIG_FILE = "config.json"
+SYSTEM_CONFIG = "system_config"
+DEFAULT_LLM_MODEL = "default_llm_model"
+LLM_MODELS = "llm_models"
+PLUGINS = "plugins"
+NLTK_DATA_PATH = "nltk_data"

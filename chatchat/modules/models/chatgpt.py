@@ -1,8 +1,11 @@
+# coding=utf-8
+
 from typing import Optional, List, Dict
 import gradio as gr
 import logging
+from retry import retry
 
-from .base import BaseModel
+from .base import BaseLLM
 from revChatGPT.V1 import Chatbot
 from core import shared
 from core import model
@@ -18,7 +21,7 @@ CHATPROXY_PROXYS = [
 MODEL_NAME = "ChatGPT"
 
 
-class ChatGPT(BaseModel):
+class ChatGPT(BaseLLM):
     chatgptBot: object = None
     email: str = None
     password: str = None
@@ -26,15 +29,17 @@ class ChatGPT(BaseModel):
 
     def __init__(self):
         super().__init__()
+        logger.info(f"Model {MODEL_NAME} init")
 
     @property
-    def _llm_type(self) -> str:
+    def _model_name(self) -> str:
         return MODEL_NAME
 
     def unload_model(self):
         del self.chatgptBot
         self.chatgptBot = None
 
+    @retry(tries=3, delay=1)
     def reload_model(self):
         config = shared.opts.get(MODEL_NAME, None)
         logger.info(f"model config: {config}")
@@ -51,16 +56,9 @@ class ChatGPT(BaseModel):
             base_url=None,
         )
 
-    def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
-        logger.debug(f"__call: {prompt}")
-        for data in self.chatgptBot.ask(prompt):
-            response = data["message"]
-        logger.debug(f"response: {response}")
-        return response
-
     def generateAnswer(
         self, prompt: str, history: List[List[str]] = [], streaming: bool = False
-    ):
+    ) -> List[List[str]]:
         if streaming:
             history += [[]]
             for data in self.chatgptBot.ask(prompt):
@@ -76,30 +74,29 @@ class ChatGPT(BaseModel):
         with gr.Box(elem_id="chagpt_free_mode"):
             gr.Markdown(
                 """
-## ChatGPT Free Mode
-Using a free reverse proxy to pass Cloudflare browser check that allows users to access OpenAI API for free.
-
+## ChatGPT免费版
+使用ChatGPT免费代理来实现网页版免费聊天的效果。
 
 """
             )
             email = gr.Textbox(
-                label="Email",
-                info="OpenAI Email Address",
+                label="邮箱",
+                info="OpenAI邮箱地址",
                 value=lambda: shared.opts.get(MODEL_NAME, "email"),
             )
             password = gr.Textbox(
-                label="Password",
-                info="OpenAI Password",
+                label="密码",
+                info="OpenAI密码",
                 value=lambda: shared.opts.get(MODEL_NAME, "password"),
             )
             proxy = gr.Dropdown(
                 choices=CHATPROXY_PROXYS,
                 value=lambda: shared.opts.get(MODEL_NAME, "proxy"),
-                label="ChatGPT Porxy",
-                info="ChatGPT Free Reverse Proxy URL",
+                label="ChatGPT代理",
+                info="ChatGPT免费代理的URL",
             )
         model_config_save_btn = gr.Button(
-            "Save and Reload",
+            "保存并加载",
             elem_id="model_config_save",
             variant="primary",
         )

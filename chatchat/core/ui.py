@@ -1,27 +1,12 @@
+# coding=utf-8
+
 import gradio as gr
 import logging
 
 from core import model
+from core import plugin
 from core import shared
-
-
-MODE_CHAT = "ChatBot"
-MODE_CONFIG = "Config"
-
-get_local_storage = """
-    function() {
-      globalThis.setStorage = (key, value)=>{
-        localStorage.setItem(key, JSON.stringify(value))
-      }
-       globalThis.getStorage = (key, value)=>{
-        return JSON.parse(localStorage.getItem(key))
-      }
-       const text_input =  getStorage('text_input')
-       const dropdown =  getStorage('dropdown')
-       const local_data =  getStorage('local_data')
-       return [text_input, dropdown, local_data];
-      }
-    """
+from core.const import *
 
 
 def mode_change(mode_choice):
@@ -47,15 +32,35 @@ def create_ui():
     ) as app:
         with gr.Row(visible=True, elem_id="main"):
             with gr.Column(elem_id="main_sider"):
-                with gr.Group(elem_id="new_chat_wrap"):
-                    new_chat = gr.Button(
-                        value="+  New Chat",
+                with gr.Group(elem_id="plugin_choice_wrap"):
+                    plugin_choice = gr.Dropdown(
+                        choices=[
+                            shared.opts.to_display_name(choice)
+                            for choice in shared.opts.get(SYSTEM_CONFIG, PLUGINS)
+                            + ["None"]
+                        ],
+                        container=False,
+                        label="插件:",
+                        elem_id="plugin_choice",
+                        value=lambda: shared.opts.to_display_name(
+                            shared.cur_plugin_name
+                        ),
                         interactive=True,
-                        elem_id="new_chat",
-                        visible=False,
                     )
-                with gr.Group(elem_id="chat_history"):
-                    gr.Markdown()
+                with gr.Group(elem_id="plugin_ui"):
+                    plugin_uis = []
+                    for plugin_name in shared.opts.get(SYSTEM_CONFIG, PLUGINS):
+                        with gr.Box(
+                            elem_id="plugin_ui_" + plugin_name,
+                            visible=plugin_name == shared.cur_plugin_name,
+                        ) as plugin_ui:
+                            shared.plugins[plugin_name].create_plugin_ui()
+                        plugin_uis.append(plugin_ui)
+                    plugin_choice.change(
+                        fn=plugin.plugin_change,
+                        inputs=[plugin_choice],
+                        outputs=plugin_uis,
+                    )
                 mode_choice = gr.Radio(
                     [MODE_CHAT, MODE_CONFIG],
                     elem_id="mode_choice",
@@ -67,7 +72,8 @@ def create_ui():
             with gr.Column(elem_id="main_content", visible=True) as main_content:
                 with gr.Group(elem_id="main_content_header"):
                     model_info = gr.Markdown(
-                        value=lambda: "Model: " + shared.cur_llm_model_name,
+                        value=lambda: "语言模型: "
+                        + shared.opts.to_display_name(shared.cur_llm_model_name),
                         elem_id="model_info",
                     )
                 chatbot = gr.Chatbot(
@@ -78,7 +84,7 @@ def create_ui():
                     show_label=False,
                     container=False,
                     elem_id="input_box",
-                    placeholder="Send a message...",
+                    placeholder="发送消息...",
                 )
                 response = input.submit(
                     lambda input, chatbot: (
@@ -95,18 +101,23 @@ def create_ui():
                 )
             with gr.Column(elem_id="main_config", visible=False) as main_config:
                 with gr.Column():
-                    with gr.Tab("Model", elem_id="model_config"):
+                    with gr.Tab("语言模型", elem_id="model_config"):
                         model_choice = gr.Dropdown(
-                            list(shared.llm_models.keys()),
+                            choices=[
+                                shared.opts.to_display_name(choice)
+                                for choice in shared.opts.get(SYSTEM_CONFIG, LLM_MODELS)
+                            ],
                             show_label=False,
                             container=False,
-                            label="Model Choice",
+                            label="模型选择",
                             elem_id="model_choice",
-                            value=lambda: shared.cur_llm_model_name,
+                            value=lambda: shared.opts.to_display_name(
+                                shared.cur_llm_model_name
+                            ),
                             interactive=True,
                         )
                         model_configs = []
-                        for llm_model in shared.llm_models.keys():
+                        for llm_model in shared.opts.get(SYSTEM_CONFIG, LLM_MODELS):
                             with gr.Box(
                                 elem_id="model_config_" + llm_model,
                                 visible=llm_model == shared.cur_llm_model_name,
@@ -126,12 +137,17 @@ def create_ui():
                             outputs=model_configs,
                         )
 
-                    with gr.Tab("System", elem_id="system_config"):
+                    with gr.Tab("系统", elem_id="system_config"):
                         gr.Markdown()
                         system_config_save_btn = gr.Button(
-                            "Save and Reload",
+                            "保存并加载",
                             elem_id="system_config_save",
                             variant="primary",
+                        )
+                        response = system_config_save_btn.click(
+                            fn=model.system_config_save,
+                            inputs=[],
+                            outputs=[],
                         )
             mode_choice.change(
                 fn=mode_change,

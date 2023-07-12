@@ -1,10 +1,17 @@
+# coding=utf-8
+
 from abc import ABC, abstractmethod
 from typing import List, Dict
 
-from langchain.llms.base import LLM
+from pydantic import BaseModel
 
 
-class BaseModel(LLM, ABC):
+class BaseLLM(BaseModel, ABC):
+    @property
+    @abstractmethod
+    def _model_name(self) -> str:
+        """return name of llm."""
+
     @abstractmethod
     def reload_model(self):
         """reload model of llm."""

@@ -1,23 +1,37 @@
+# coding=utf-8
+
 from typing import Any, Dict
 import json
 import logging
+from logging import Logger
 
-from modules.models import BaseModel
+from core.const import *
+from modules.models import BaseLLM
+from modules.plugins import BasePlugin
 
 import gradio as gr
 
+logger: Logger = None
 app: gr.Blocks = None
+llm_models: Dict[str, BaseLLM] = {}
 cur_llm_model_name: str = None
-llm_models: Dict = {}
+
+plugins: Dict[str, BasePlugin] = {}
+cur_plugin_name: str = "None"
 
 
-def get_model() -> BaseModel:
+def get_model() -> BaseLLM:
     return llm_models[cur_llm_model_name]
+
+
+def get_plugin() -> BasePlugin:
+    return plugins[cur_plugin_name]
 
 
 class Options:
     data = {}  # record key value
     config_file = None
+    display_name_map = {"空": "None"}
 
     def __init__(self):
         pass
@@ -53,6 +67,16 @@ class Options:
         self.config_file = config_file
         with open(config_file, "r", encoding="utf8") as file:
             self.data = json.load(file)
+
+    def to_display_name(self, name):
+        if name == "None":
+            return "空"
+        display_name = self.data[name]["display_name"]
+        self.display_name_map[display_name] = name
+        return display_name
+
+    def from_display_name(self, display_name):
+        return self.display_name_map[display_name]
 
 
 opts = Options()
