@@ -32,3 +32,11 @@ def plugin_change(plugin_choice):
         results.append(gr.update(visible=plugin_name == plugin_choice))
     shared.cur_plugin_name = plugin_choice
     return results
+
+
+def plugin_config_change(plugin_choice):
+    plugin_choice = shared.opts.from_display_name(plugin_choice)
+    results = []
+    for plugin_name in shared.opts.get(SYSTEM_CONFIG, PLUGINS):
+        results.append(gr.update(visible=plugin_name == plugin_choice))
+    return results

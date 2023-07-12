@@ -61,7 +61,7 @@ class Options:
 
     def save(self):
         with open(self.config_file, "w", encoding="utf8") as file:
-            json.dump(self.data, file, indent=4)
+            json.dump(self.data, file, indent=4, ensure_ascii=False)
 
     def load(self, config_file):
         self.config_file = config_file

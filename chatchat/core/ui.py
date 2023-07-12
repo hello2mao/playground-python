@@ -136,7 +136,36 @@ def create_ui():
                             inputs=[model_choice],
                             outputs=model_configs,
                         )
-
+                    with gr.Tab("插件", elem_id="plugin_config"):
+                        plugin_choice = gr.Dropdown(
+                            choices=[
+                                shared.opts.to_display_name(choice)
+                                for choice in shared.opts.get(SYSTEM_CONFIG, PLUGINS)
+                            ],
+                            show_label=False,
+                            container=False,
+                            label="插件选择",
+                            elem_id="plugin_choice",
+                            value=lambda: shared.opts.to_display_name(
+                                shared.opts.get(SYSTEM_CONFIG, PLUGINS)[0]
+                            ),
+                            interactive=True,
+                        )
+                        plugin_configs = []
+                        for index, plugin_name in enumerate(
+                            shared.opts.get(SYSTEM_CONFIG, PLUGINS)
+                        ):
+                            with gr.Box(
+                                elem_id="plugin_config_" + plugin_name,
+                                visible=index == 0,
+                            ) as plugin_config:
+                                shared.plugins[plugin_name].create_config_ui()
+                            plugin_configs.append(plugin_config)
+                        plugin_choice.change(
+                            fn=plugin.plugin_config_change,
+                            inputs=[plugin_choice],
+                            outputs=plugin_configs,
+                        )
                     with gr.Tab("系统", elem_id="system_config"):
                         gr.Markdown()
                         system_config_save_btn = gr.Button(
@@ -155,4 +184,5 @@ def create_ui():
                 outputs=[main_content, main_config],
             )
 
+    logging.info("create ui done")
     return app

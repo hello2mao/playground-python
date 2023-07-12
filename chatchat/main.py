@@ -14,7 +14,7 @@ if __name__ == "__main__":
     shared.app.queue(concurrency_count=3)
     app, local_url, share_url = shared.app.launch(
         server_name="0.0.0.0",
-        server_port=8077,
+        # server_port=8077,
         debug=False,
         inbrowser=False,
         show_api=False,
