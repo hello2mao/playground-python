@@ -2,6 +2,7 @@
 
 import logging
 from typing import Any, List, Mapping, Optional
+import os
 
 import gradio as gr
 from langchain.docstore.document import Document
@@ -14,27 +15,24 @@ from modules.models import BaseLLM
 from modules.textsplitter import textsplitter
 
 PLUGIN_NAME = "Summarization"
-TRIGGER_WORDS = {
-    "run": """Write a concise summary of the following:
-
-
-{text}
-
-
-CONCISE SUMMARY IN ITALIAN:""",
-    "运行": """写出以下内容的简洁摘要:
-
-
-{text}
-
-
-中文的简洁摘要:""",
-}
+TRIGGER_WORDS = ["摘要"]
 logger = logging.getLogger(PLUGIN_NAME)
 
 
 class Summarization(BasePlugin):
     docs: List[Document] = None
+
+    # config
+    chain_type: str = "stuff"
+    chunk_limit: int = 10000
+    file_size_limit: int = 10 * 1024 * 1024  # 10M
+    prompt_template: str = """请给出以下内容的简洁摘要:
+
+    
+{text}
+
+
+简洁的中文摘要:"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -57,7 +55,7 @@ class Summarization(BasePlugin):
             if prompt in TRIGGER_WORDS:
                 langchainLLM = LangchainLLM(llm)
                 PROMPT = PromptTemplate(
-                    template=TRIGGER_WORDS[prompt], input_variables=["text"]
+                    template=self.prompt_template, input_variables=["text"]
                 )
                 chain = load_summarize_chain(
                     langchainLLM, chain_type="stuff", prompt=PROMPT
@@ -65,7 +63,7 @@ class Summarization(BasePlugin):
                 response = chain.run(self.docs)
                 history.append([prompt, response])
             else:
-                history.append([prompt, f"请使用聊天触发词: 运行 或者 run"])
+                history.append([prompt, f"请使用摘要发词: {TRIGGER_WORDS}"])
         yield history
 
     def create_plugin_ui(self):
@@ -74,9 +72,8 @@ class Summarization(BasePlugin):
             插件功能：自动生成文档的摘要。
             支持的文档格式: txt、md、docx、pdf、png、jpg、jpeg、csv。
 
-            用以下聊天词来触发摘要的功能：
-            * **run** 用于生成英文版摘要。
-            * **运行** 用于生成中文版摘要。
+            用以下聊天词来获取摘要结果：
+            * **摘要**
             """
         )
         file = gr.File(
@@ -96,6 +93,13 @@ class Summarization(BasePlugin):
 
         def file_upload(file_obj, progress=gr.Progress(track_tqdm=True)):
             logger.debug(f"start textsplitter docs: {file_obj.name}")
+            file_stats = os.stat(file_obj.name)
+            file_size = file_stats.st_size  # 获取文件大小（以字节为单位）
+            if file_size > self.file_size_limit:
+                errMsg = f"file_upload failed: file_size > {self.file_size_limit}"
+                logger.error(errMsg)
+                gr.Error(errMsg)
+                return
             self.docs = textsplitter.split_text(filepath=file_obj.name)
             logger.debug(f"textsplitter docs done, docs len: {len(self.docs)}")
 
