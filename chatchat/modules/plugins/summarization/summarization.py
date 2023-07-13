@@ -9,8 +9,8 @@ from langchain.docstore.document import Document
 from langchain.chains.summarize import load_summarize_chain
 from langchain.prompts import PromptTemplate
 
-from .base import BasePlugin
-from .base import LangchainLLM
+from ..base import BasePlugin
+from ..base import LangchainLLM
 from core import shared
 from core.const import *
 from modules.models import BaseLLM
@@ -45,7 +45,7 @@ class Summarization(BasePlugin):
         logger.info(f"Plugin {PLUGIN_NAME} init")
 
     @property
-    def _plugin_name(self) -> str:
+    def plugin_name(self) -> str:
         return PLUGIN_NAME
 
     def _update_config(self):
@@ -97,8 +97,9 @@ class Summarization(BasePlugin):
         llm: BaseLLM,
         prompt: str,
         history: List[List[str]] = [],
+        llm_history: List[List[str]] = [],
         streaming: bool = False,
-    ) -> List[List[str]]:
+    ):
         self._update_config()
         if self.docs is None:
             history.append([prompt, f"文档还没解析完成，请稍等"])
@@ -118,7 +119,7 @@ class Summarization(BasePlugin):
                 history.append([prompt, response])
             else:
                 history.append([prompt, f"请使用摘要发词: {TRIGGER_WORDS}"])
-        yield history
+        yield history, history
 
     def create_plugin_ui(self):
         gr.Markdown(

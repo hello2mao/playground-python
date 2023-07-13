@@ -4,7 +4,7 @@ import gc
 import torch
 
 
-def clear_torch_cache(cuda_device: str = None):
+def clear_torch_cache(cuda_device: str = "cuda"):
     gc.collect()
     if cuda_device is not None:
         if torch.has_mps:

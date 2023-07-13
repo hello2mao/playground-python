@@ -1,6 +1,6 @@
 {
     "system_config": {
-        "default_llm_model": "ChatGLM",
+        "default_llm_model": "ChatGPT",
         "llm_models": [
             "ChatGPT",
             "ChatGLM",
@@ -8,13 +8,14 @@
         ],
         "plugins": [
             "Summarization",
+            "AIFriend",
             "SQL"
         ]
     },
     "ChatGPT": {
-        "email": "tcohen6@bodytracker.shop",
-        "password": "@Ahrqg3E$j",
-        "proxy": "https://api.pawan.krd/backend-api/conversation",
+        "email": "rqbcu71yx@yunweiloginmh3.com",
+        "password": "ai046012",
+        "proxy": "https://bypass.churchless.tech/",
         "display_name": "ChatGPT"
     },
     "ChatGLM": {
@@ -33,6 +34,13 @@
         "sentence_size": 100,
         "using_zh_title_enhance": true,
         "prompt_template": "请给出以下内容的简洁摘要:\n\n    \n{text}\n\n\n简洁的中文摘要:\n"
+    },
+    "AIFriend": {
+        "display_name": "虚拟好友",
+        "file_size_limit": 104857600,
+        "last_vs_path": "/tmp/tmpri46pm1o",
+        "sentence_size": 100,
+        "using_zh_title_enhance": false
     },
     "SQL": {
         "display_name": "对话SQL数据库"

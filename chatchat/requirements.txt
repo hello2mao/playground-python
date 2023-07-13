@@ -2,13 +2,15 @@ gradio==3.35.2
 accelerate==0.20.3
 transformers==4.30.2
 sentencepiece==0.1.99
-langchain==0.0.223
+langchain==0.0.174
+retry
+timedelta
+
 paddlepaddle==2.4.2
 paddleocr~=2.6.1.3
 nltk~=3.8.1
 feedparser
 html2text
-retry
 unstructured[local-inference]
 
 # chatgpt
@@ -16,3 +18,8 @@ revChatGPT==6.6.1
 
 # baichuan
 transformers_stream_generator==0.0.4
+
+# ai friend
+pypinyin
+sentence_transformers
+faiss-cpu==1.7.4

@@ -13,7 +13,7 @@ from langchain.llms.base import LLM
 class BasePlugin(BaseModel, ABC):
     @property
     @abstractmethod
-    def _plugin_name(self) -> str:
+    def plugin_name(self) -> str:
         """return name of plugin."""
 
     @abstractmethod
@@ -22,8 +22,9 @@ class BasePlugin(BaseModel, ABC):
         llm: BaseLLM,
         prompt: str,
         history: List[List[str]] = [],
+        llm_history: List[List[str]] = [],
         streaming: bool = False,
-    ) -> List[List[str]]:
+    ):
         """return answer of plugin."""
 
     @abstractmethod

@@ -50,7 +50,7 @@ def create_ui():
                 with gr.Group(elem_id="plugin_ui"):
                     plugin_uis = []
                     for plugin_name in shared.opts.get(SYSTEM_CONFIG, PLUGINS):
-                        with gr.Box(
+                        with gr.Column(
                             elem_id="plugin_ui_" + plugin_name,
                             visible=plugin_name == shared.cur_plugin_name,
                         ) as plugin_ui:
@@ -80,6 +80,7 @@ def create_ui():
                     show_label=False,
                     elem_id="chatbot",
                 )
+                llm_history = gr.State(value=[])
                 input = gr.Textbox(
                     show_label=False,
                     container=False,
@@ -95,7 +96,9 @@ def create_ui():
                     [input, chatbot],
                     queue=False,
                 )
-                response.then(model.stream_chat, [chatbot], [chatbot])
+                response.then(
+                    model.stream_chat, [chatbot, llm_history], [chatbot, llm_history]
+                )
                 response.then(
                     lambda: gr.update(interactive=True), None, [input], queue=False
                 )
@@ -118,7 +121,7 @@ def create_ui():
                         )
                         model_configs = []
                         for llm_model in shared.opts.get(SYSTEM_CONFIG, LLM_MODELS):
-                            with gr.Box(
+                            with gr.Column(
                                 elem_id="model_config_" + llm_model,
                                 visible=llm_model == shared.cur_llm_model_name,
                             ) as model_config:
@@ -155,7 +158,7 @@ def create_ui():
                         for index, plugin_name in enumerate(
                             shared.opts.get(SYSTEM_CONFIG, PLUGINS)
                         ):
-                            with gr.Box(
+                            with gr.Column(
                                 elem_id="plugin_config_" + plugin_name,
                                 visible=index == 0,
                             ) as plugin_config:

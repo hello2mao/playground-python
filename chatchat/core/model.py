@@ -45,7 +45,7 @@ def unload_model():
     logging.info(f"unload_model done: {shared.cur_llm_model_name}")
 
 
-def stream_chat(chatbot: List[List[str]]):
+def stream_chat(chatbot: List[List[str]], llm_history: List[List[str]]):
     if shared.cur_llm_model_name is None:
         return
     if shared.cur_plugin_name == "None":
@@ -54,7 +54,7 @@ def stream_chat(chatbot: List[List[str]]):
             for history in shared.get_model().generateAnswer(
                 input, chatbot[:-1], streaming=True
             ):
-                yield history
+                yield history, history
         except Exception as err:
             errMsg = f"错误：{err}"
             logging.error(errMsg)
@@ -62,10 +62,10 @@ def stream_chat(chatbot: List[List[str]]):
     else:
         try:
             input = chatbot[-1][0]
-            for history in shared.get_plugin().generatePluginAnswer(
-                shared.get_model(), input, chatbot[:-1], streaming=False
+            for history, llm_history in shared.get_plugin().generatePluginAnswer(
+                shared.get_model(), input, chatbot[:-1], llm_history, streaming=False
             ):
-                yield history
+                yield history, llm_history
         except Exception as err:
             errMsg = f"错误：{err}"
             logging.error(errMsg)

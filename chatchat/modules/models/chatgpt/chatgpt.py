@@ -5,8 +5,9 @@ import gradio as gr
 import logging
 from retry import retry
 
-from .base import BaseLLM
+from ..base import BaseLLM
 from revChatGPT.V1 import Chatbot
+from modules.openai.auth import Auth0
 from core import shared
 from core import model
 
@@ -14,15 +15,14 @@ logger = logging.getLogger("ChatGPT")
 
 CHATPROXY_PROXYS = [
     "https://bypass.churchless.tech/",
-    "https://ai.fakeopen.com/api/conversation",
-    "https://api.pawan.krd/backend-api/conversation",
+    "https://ai.fakeopen.com/api/",
+    "https://api.pawan.krd/backend-api/",
 ]
 
 MODEL_NAME = "ChatGPT"
 
 
 class ChatGPT(BaseLLM):
-    chatgptBot: object = None
     email: str = None
     password: str = None
     proxy: str = None
@@ -32,12 +32,11 @@ class ChatGPT(BaseLLM):
         logger.info(f"Model {MODEL_NAME} init")
 
     @property
-    def _model_name(self) -> str:
+    def model_name(self) -> str:
         return MODEL_NAME
 
     def unload_model(self):
-        del self.chatgptBot
-        self.chatgptBot = None
+        pass
 
     @retry(tries=3, delay=1)
     def reload_model(self):
@@ -48,24 +47,27 @@ class ChatGPT(BaseLLM):
         self.proxy = config.get("proxy", None)
 
         self.unload_model()
-        self.chatgptBot = Chatbot(
-            config={
-                "email": self.email,
-                "password": self.password,
-            },
-            base_url=None,
-        )
 
     def generateAnswer(
         self, prompt: str, history: List[List[str]] = [], streaming: bool = False
     ) -> List[List[str]]:
+        auth = Auth0(email=self.email, password=self.password)
+        access_token = auth.auth()
+        chatgptBot = Chatbot(
+            config={
+                # "email": self.email,
+                # "password": self.password,
+                "access_token": access_token
+            },
+            base_url=self.proxy,
+        )
         if streaming:
             history += [[]]
-            for data in self.chatgptBot.ask(prompt):
+            for data in chatgptBot.ask(prompt):
                 history[-1] = [prompt, data["message"]]
                 yield history
         else:
-            for data in self.chatgptBot.ask(prompt):
+            for data in chatgptBot.ask(prompt):
                 response = data["message"]
             history += [[prompt, response]]
             yield history

@@ -9,7 +9,7 @@ import logging
 from retry import retry
 
 
-from .base import BaseLLM
+from ..base import BaseLLM
 from modules.utils import gpu
 from core import shared
 from core import model
@@ -51,7 +51,7 @@ class ChatGLM(BaseLLM):
         logger.info(f"Model {MODEL_NAME} init")
 
     @property
-    def _model_name(self) -> str:
+    def model_name(self) -> str:
         return MODEL_NAME
 
     def _load_model_config(self):

@@ -92,6 +92,8 @@ footer {
 
 #main_sider #plugin_ui {
     flex-grow: 1;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 #plugin_ui>.block {

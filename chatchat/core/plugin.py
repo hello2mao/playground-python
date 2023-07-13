@@ -7,6 +7,7 @@ from retry import retry
 
 from modules.plugins import Summarization
 from modules.plugins import SQL
+from modules.plugins import *
 from modules.plugins import BasePlugin
 from modules.utils.log import record_log
 from core import shared

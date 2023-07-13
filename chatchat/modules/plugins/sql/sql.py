@@ -5,8 +5,8 @@ from typing import Any, List, Mapping, Optional
 
 import gradio as gr
 
-from .base import BasePlugin
-
+from ..base import BasePlugin
+from modules.models import BaseLLM
 
 PLUGIN_NAME = "SQL"
 logger = logging.getLogger(PLUGIN_NAME)
@@ -18,12 +18,17 @@ class SQL(BasePlugin):
         logger.info(f"Plugin {PLUGIN_NAME} init")
 
     @property
-    def _plugin_name(self) -> str:
+    def plugin_name(self) -> str:
         return PLUGIN_NAME
 
     def generatePluginAnswer(
-        self, prompt: str, history: List[List[str]] = [], streaming: bool = False
-    ) -> List[List[str]]:
+        self,
+        llm: BaseLLM,
+        prompt: str,
+        history: List[List[str]] = [],
+        llm_history: List[List[str]] = [],
+        streaming: bool = False,
+    ):
         pass
 
     def create_plugin_ui(self):

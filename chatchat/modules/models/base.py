@@ -9,7 +9,7 @@ from pydantic import BaseModel
 class BaseLLM(BaseModel, ABC):
     @property
     @abstractmethod
-    def _model_name(self) -> str:
+    def model_name(self) -> str:
         """return name of llm."""
 
     @abstractmethod
