@@ -5,6 +5,7 @@ sentencepiece==0.1.99
 langchain==0.0.174
 retry
 timedelta
+prompt-toolkit==3.0.39
 
 paddlepaddle==2.4.2
 paddleocr~=2.6.1.3

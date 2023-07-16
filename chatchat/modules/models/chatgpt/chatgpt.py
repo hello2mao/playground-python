@@ -6,8 +6,7 @@ import logging
 from retry import retry
 
 from ..base import BaseLLM
-from revChatGPT.V1 import Chatbot
-from modules.openai.auth import Auth0
+from modules.openai import Chatbot
 from core import shared
 from core import model
 
@@ -51,13 +50,10 @@ class ChatGPT(BaseLLM):
     def generateAnswer(
         self, prompt: str, history: List[List[str]] = [], streaming: bool = False
     ) -> List[List[str]]:
-        auth = Auth0(email=self.email, password=self.password)
-        access_token = auth.auth()
         chatgptBot = Chatbot(
             config={
-                # "email": self.email,
-                # "password": self.password,
-                "access_token": access_token
+                "email": self.email,
+                "password": self.password,
             },
             base_url=self.proxy,
         )
