@@ -1,0 +1,3 @@
+[submodule "AiChat"]
+	path = AiChat
+	url = git@github.com:hello2mao/AiChat.git
